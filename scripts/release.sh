@@ -33,6 +33,7 @@ shasum -a 256 "$ZIP" | tee "$ZIP.sha256"
 
 git tag -a "$TAG" -m "Murmur $VERSION"
 git push origin HEAD "$TAG"
-NOTES="Install or update: \`curl -fsSL https://raw.githubusercontent.com/$(gh repo view --json nameWithOwner -q .nameWithOwner)/main/install.sh | bash\`"
-gh release create "$TAG" "$ZIP" "$ZIP.sha256" --title "Murmur $VERSION" --generate-notes --notes "$NOTES"
+REPO=$(git remote get-url origin | sed -E 's#(git@github.com:|https://github.com/)##; s#\.git$##')
+NOTES="Install or update: \`curl -fsSL https://raw.githubusercontent.com/$REPO/main/install.sh | bash\`"
+gh release create "$TAG" "$ZIP" "$ZIP.sha256" --repo "$REPO" --title "Murmur $VERSION" --generate-notes --notes "$NOTES"
 echo "Released $TAG"
