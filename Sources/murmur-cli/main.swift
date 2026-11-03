@@ -290,7 +290,7 @@ func runTests() async -> Int32 {
             && section("Action items").contains("delivery window for the Gdansk route? _(00:01:50)_ | Others | Not specified |")),
         ("summary: figures kept as context", offline.contains("1200 euros")),
         ("summary: empty meeting still summarized", OfflineSummarizer.summarize(empty).contains("No speech was captured")),
-    ] + libraryChecks(call, summary: offline) + (await titleChecks(call)) + speakerChecks()
+    ] + libraryChecks(call, summary: offline) + (await titleChecks(call)) + speakerChecks() + configChecks()
     for (name, ok) in summaryChecks {
         if ok {
             print("PASS  \(name)")
@@ -655,4 +655,12 @@ func speakerChecks() -> [(String, Bool)] {
         ("summary input: noise left out",
          !call.plainText.contains("Mm-hmm") && !call.plainText.contains("com") && call.plainText.contains("generator")),
     ]
+}
+
+/// Settings written by the installer hold only the API key; everything else keeps its default.
+func configChecks() -> [(String, Bool)] {
+    let json = #"{"llm":{"apiKey":"sk-ant-test","enabled":true},"hotkey":"fn"}"#
+    let config = try? JSONDecoder().decode(MurmurConfig.self, from: Data(json.utf8))
+    return [("config: installer's minimal settings load",
+             config?.llm.apiKey == "sk-ant-test" && config?.llm.model == LLMConfig().model && config?.hotkey == "fn")]
 }

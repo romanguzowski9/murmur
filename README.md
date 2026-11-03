@@ -22,8 +22,15 @@ Paste this into Terminal:
 curl -fsSL https://raw.githubusercontent.com/romanguzowski9/murmur/main/install.sh | bash
 ```
 
-That downloads the latest release into **Applications** and starts it. To update later, run the same command. Your
-notes and settings stay in `~/Library/Application Support/Murmur`.
+The installer:
+1. Puts the latest Murmur into **Applications**. Whisper (whisper.cpp) is built in, so Homebrew isn't needed.
+2. Downloads the Whisper speech models once (1.7 GB, from Hugging Face).
+3. Walks you through creating a **Claude API key** for meeting summaries. It opens the Anthropic Console, checks
+   the key you paste, and saves it in Murmur's settings. You can press Return to skip this.
+4. Starts Murmur.
+
+To update, run the same command again; models and key are kept. Your notes and settings stay in
+`~/Library/Application Support/Murmur`. `MURMUR_SKIP_MODELS=1` or `MURMUR_SKIP_KEY=1` before `bash` skips a step.
 
 <details>
 <summary>Install by hand instead</summary>
@@ -42,12 +49,12 @@ notes and settings stay in `~/Library/Application Support/Murmur`.
    pasting. For meeting notes, also allow **Screen & System Audio Recording**; that's how Murmur hears the call.
 3. If fn opens the emoji picker, set System Settings → Keyboard → "Press 🌐 key to" → *Do Nothing*, or choose
    another key in the menu.
-4. **Whisper (recommended).** Murmur works at once with Apple's speech recognition. For better accuracy, install
-   whisper.cpp (`brew install whisper-cpp`) and let Murmur download its models (1.7 GB) when it offers, or later
-   from the menu › Speech recognition.
-5. **Claude (optional).** For AI meeting summaries, add a Claude API key from
-   [console.anthropic.com](https://console.anthropic.com) in the menu › *Add Claude API key…*. It costs about
-   $0.04 for an hour-long meeting. Without a key, Murmur writes a simpler offline summary.
+4. **Whisper.** If you skipped the model download, Murmur uses Apple's speech recognition and offers the download
+   later (menu › Speech recognition).
+5. **Claude key.** If you skipped it, add one later with menu › *Add Claude API key…*. To get one, sign in at
+   [console.anthropic.com](https://console.anthropic.com), add credit under Billing (from $5; a Claude.ai
+   subscription doesn't cover API use), then create a key under API Keys. An hour-long meeting costs about $0.04.
+   Without a key, Murmur writes a simpler offline summary.
 
 *Check for updates…* in the menu tells you when a new version is out.
 
@@ -63,18 +70,24 @@ You need Xcode (or its Command Line Tools) with the macOS 26 SDK or later.
 open build/Murmur.app
 ```
 
-`./scripts/build_app.sh --install` replaces `~/Applications/Murmur.app`. Run the tests with
+`./scripts/build_app.sh --install` replaces `~/Applications/Murmur.app`. Local builds use Homebrew's
+`whisper-cpp`. To bundle whisper.cpp like releases do, install `cmake` and run `./scripts/build_whisper.sh` first. Run the tests with
 `swift build -c release && .build/release/murmur-cli test`.
 
 ### Releasing
 
 1. Put the new version in `VERSION` and commit.
-2. Run `./scripts/release.sh`. It runs the tests, builds the app, zips it, tags `v<version>` and publishes a GitHub
-   release with the zip. That needs the GitHub CLI, signed in.
+2. Run `./scripts/release.sh`. It runs the tests, then tags `v<version>` and pushes it.
+3. GitHub Actions (`.github/workflows/release.yml`) does the rest:
+   - builds whisper.cpp 1.9.5 as one self-contained universal binary (`scripts/build_whisper.sh`);
+   - builds the universal app and zips it (`scripts/package.sh`);
+   - publishes the release.
+
+   It takes about 10 minutes. To build the zip without releasing, run the workflow by hand from the Actions tab.
 
 The app is signed ad hoc with a fixed identifier, so macOS keeps users' permissions across updates. To sign with an
 Apple Developer ID and notarize, set `SIGN_IDENTITY` (and `NOTARY_PROFILE`, a `notarytool` keychain profile) before
-running the release script.
+packaging (`scripts/package.sh`); in GitHub Actions they'd come from repository secrets.
 
 ## How it compares with Wispr Flow
 

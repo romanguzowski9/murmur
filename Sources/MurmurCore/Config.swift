@@ -101,6 +101,16 @@ public struct LLMConfig: Codable, Equatable {
 
     public init() {}
 
+    /// Missing fields take their defaults, so a hand-written `{"apiKey": "…"}` (e.g. from the installer) works.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = LLMConfig()
+        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? d.enabled
+        model = try c.decodeIfPresent(String.self, forKey: .model) ?? d.model
+        apiKey = try c.decodeIfPresent(String.self, forKey: .apiKey) ?? d.apiKey
+        timeoutSeconds = try c.decodeIfPresent(Double.self, forKey: .timeoutSeconds) ?? d.timeoutSeconds
+    }
+
     public var resolvedKey: String? {
         if !apiKey.isEmpty { return apiKey }
         let env = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] ?? ""

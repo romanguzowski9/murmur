@@ -21,6 +21,15 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp "$BIN/Murmur" "$APP/Contents/MacOS/Murmur"
 # The MCP server Claude launches to read meeting notes; signed on its own first, like any nested executable.
+# whisper.cpp's server, when built by scripts/build_whisper.sh (releases); otherwise Murmur uses Homebrew's.
+if [[ -x build/whisper/whisper-server ]]; then
+  cp build/whisper/whisper-server "$APP/Contents/MacOS/whisper-server"
+  if [[ "${SIGN_IDENTITY:--}" == "-" ]]; then
+    codesign --force --sign - "$APP/Contents/MacOS/whisper-server"
+  else
+    codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP/Contents/MacOS/whisper-server"
+  fi
+fi
 cp "$BIN/murmur-mcp" "$APP/Contents/MacOS/murmur-mcp"
 if [[ "$SIGN" == "-" ]]; then
   codesign --force --sign - "$APP/Contents/MacOS/murmur-mcp"

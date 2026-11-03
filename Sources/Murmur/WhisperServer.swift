@@ -38,8 +38,10 @@ final class WhisperServer {
         return server.isReady ? server : nil
     }
 
+    /// The copy inside Murmur.app (release builds), else one installed with Homebrew.
     static var program: URL? {
-        ["/opt/homebrew/bin/whisper-server", "/usr/local/bin/whisper-server"]
+        let bundled = Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/whisper-server").path
+        return [bundled, "/opt/homebrew/bin/whisper-server", "/usr/local/bin/whisper-server"]
             .map(URL.init(fileURLWithPath:)).first { FileManager.default.isExecutableFile(atPath: $0.path) }
     }
 
